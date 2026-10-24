@@ -241,7 +241,7 @@ class Simulator:
             return self.cash
         return self.cash  # fixed_lots: bounded by cash only
 
-    def _buy(self, feed: SymbolFeed, i: int, base_price: float, reason: str, kind: str) -> None:
+    def _buy(self, feed: SymbolFeed, i: int, base_price: float, reason: str, kind: str,signal_index: int | None = None) -> None:
         inst = feed.instrument
         lot = inst.lot_size
         price = min(base_price + self._slip(base_price, feed, i), feed.h[i])
@@ -279,10 +279,12 @@ class Simulator:
         pos = self.positions[feed.symbol]
         if pos.quantity == 0:
             pos.entry_index = i
+            sig_i = signal_index if signal_index is not None else i  # ← 补上这行 20261024
             pos.trade = Trade(
                 symbol=feed.symbol,
                 entry_time=feed.bars.index[i],
                 entry_index=i,
+                entry_signal_time=feed.bars.index[sig_i],  # ← 新增  20261024
                 quantity=0,
                 entry_value=0.0,
                 entry_fees=0.0,
@@ -296,7 +298,7 @@ class Simulator:
         pos.trade.entry_fees += fees.total
         self.fills.append(fill)
 
-    def _sell(self, feed: SymbolFeed, i: int, price: float, reason: str, kind: str) -> None:
+    def _sell(self, feed: SymbolFeed, i: int, price: float, reason: str, kind: str,signal_index: int | None = None) -> None:
         pos = self.positions[feed.symbol]
         qty = pos.quantity
         if qty <= 0:
@@ -327,6 +329,7 @@ class Simulator:
             trade = pos.trade
             trade.exit_time = feed.bars.index[i]
             trade.exit_index = i
+            trade.exit_signal_time = feed.bars.index[signal_index if signal_index is not None else i]  # ← 新增时间点 20261024
             trade.exit_reason = reason
             trade.exit_fill = kind
             trade.cash_after = self.cash  #平仓后，计算剩余所有现金20261023
@@ -488,16 +491,16 @@ class Simulator:
                 order = self.pending.get(f.symbol)
                 if order is not None and order.side == "SELL":
                     del self.pending[f.symbol]
-                    self._sell(f, i, f.o[i] - self._slip(f.o[i], f, i), order.reason, "open")
+                    self._sell(f, i, f.o[i] - self._slip(f.o[i], f, i), order.reason, "open", order.created_index)  #增加时间点20261024
             for f, i in active:
                 order = self.pending.get(f.symbol)
                 if order is not None and order.side == "BUY":
                     del self.pending[f.symbol]
                     if self._held_count() >= self.pf.max_positions:
                         # A sell counted on at decision time did not fill (e.g. no bar yet).
-                        self._event(f, i, "buy_skipped", "max_positions still full at the open")
+                        self._event(f, i, "buy_skipped", "max_positions still full at the open")  #增加时间点20261024
                         continue
-                    self._buy(f, i, f.o[i], order.reason, "open")
+                    self._buy(f, i, f.o[i], order.reason, "open", order.created_index)  # ← signal_index 加在这里20261024
             for f, i in active:
                 self._risk_exit(f, i)
             for f, i in active:

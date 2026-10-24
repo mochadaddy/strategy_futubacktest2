@@ -14,3 +14,5 @@ __all__ = [
     "MACrossStrategy",
     "RSIStrategy",
 ]
+
+from . import ma_hour_cross  # noqa: F401

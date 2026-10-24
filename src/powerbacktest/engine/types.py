@@ -71,6 +71,10 @@ class Trade:
     # Shares still held when an open trade is marked (may be less than ``quantity`` after
     # partial, volume-capped exits).
     open_quantity: int = 0
+    entry_signal_time: pd.Timestamp | None = None   #增加时间点20261024
+    exit_signal_time: pd.Timestamp | None = None    #增加时间点20261024
+
+
 
     @property
     def entry_price(self) -> float:
@@ -115,7 +119,9 @@ class Trade:
         return {
             "symbol": self.symbol,
             "entry_time": self.entry_time.isoformat(),
+            "entry_signal_time": self.entry_signal_time.isoformat() if self.entry_signal_time is not None else None, #增加时间点20261024
             "exit_time": self.exit_time.isoformat() if self.exit_time is not None else None,
+            "exit_signal_time": self.exit_signal_time.isoformat() if self.exit_signal_time is not None else None, #增加时间点20261024
             "quantity": self.quantity,
             "open_quantity": self.open_quantity if self.is_open else 0,
             "entry_price": self.entry_price,

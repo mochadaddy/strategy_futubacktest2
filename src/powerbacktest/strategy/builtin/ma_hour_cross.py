@@ -16,6 +16,7 @@ class MAHourCrossParams(StrategyParams):
     short_window: int = Field(20, ge=1, le=500)
     long_window: int = Field(50, ge=2, le=1000)
     ma_type: Literal["sma", "ema"] = "sma"
+    mode: Literal["cross", "state"] = "cross"
     turn_bars: int = Field(3, ge=1, le=20)
     bars_per_day: int = Field(4, ge=1, le=24, description="hourly bars per trading day")
 
@@ -63,10 +64,13 @@ class MAHourCrossStrategy(Strategy):
         up, down = ma_long > REF(ma_long, n), ma_long < REF(ma_long, n)
 
         # "Live" daily signal (same-day, no shift) -- used to detect intraday trigger.
-        live_sig = pd.Series(float("nan"), index=daily.index)
-        live_sig[CROSS(ma_short, ma_long) & up] = 1.0
-        live_sig[CROSS(ma_long, ma_short) & down] = 0.0
-        live_sig = live_sig.ffill()  # state held through the day until it flips
+        if p.mode == "state":
+            live_sig = (ma_short > ma_long).astype(float).where(ma_long.notna())
+        else:
+            live_sig = pd.Series(float("nan"), index=daily.index)
+            live_sig[CROSS(ma_short, ma_long) & up] = 1.0
+            live_sig[CROSS(ma_long, ma_short) & down] = 0.0
+            live_sig = live_sig.ffill()
 
         day_series = pd.Series(day, index=bars.index)
         is_last_bar_of_day = day_series != day_series.shift(-1)
