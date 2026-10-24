@@ -329,6 +329,7 @@ class Simulator:
             trade.exit_index = i
             trade.exit_reason = reason
             trade.exit_fill = kind
+            trade.cash_after = self.cash  #平仓后，计算剩余所有现金20261023
             self._excursions(feed, trade)
             self.trades.append(trade)
             pos.trade = None
@@ -534,6 +535,7 @@ class Simulator:
                 trade.is_open = True
                 trade.mark_price = f.c[f.last]
                 trade.open_quantity = pos.quantity
+                trade.cash_after = self.cash  # 对于回测结束时仍未平仓
                 self._excursions(f, trade)
                 self.trades.append(trade)
 

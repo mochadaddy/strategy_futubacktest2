@@ -599,12 +599,12 @@ footer a { color: var(--ink-2); }
   function renderTrades(symbol) {
     var trades = tradesFor(symbol);
     if (!trades.length) { $("tradeTable").innerHTML = '<div class="empty">No trades for this symbol.</div>'; return; }
-    var h = "<table><thead><tr><th>Entry</th><th>Exit</th><th>Qty</th><th>Entry px</th><th>Exit px</th><th>P&amp;L</th><th>Return</th><th>Fees</th><th>Bars</th><th>MAE</th><th>MFE</th><th>Exit</th></tr></thead><tbody>";
+    var h = "<table><thead><tr><th>Entry</th><th>Exit</th><th>Qty</th><th>Entry px</th><th>Exit px</th><th>P&amp;L</th><th>Return</th><th>Fees</th><th>Bars</th><th>MAE</th><th>MFE</th><th>Cash</th><th>Exit</th></tr></thead><tbody>";
     trades.forEach(function (t) {
       h += "<tr><td>" + isoDate(t.entry_time) + "</td><td>" + (t.is_open ? "open" : isoDate(t.exit_time)) + "</td><td>" + fx(t.quantity, 0) +
         "</td><td>" + fx(t.entry_price, 3) + "</td><td>" + fx(t.exit_price, 3) + '</td><td class="' + signCls(t.pnl) + '">' + money(t.pnl) +
         '</td><td class="' + signCls(t.return_pct) + '">' + spct(t.return_pct) + "</td><td>" + fx(t.fees) + "</td><td>" + (t.bars_held == null ? "—" : t.bars_held) +
-        "</td><td>" + pct(t.mae_pct, 1) + "</td><td>" + pct(t.mfe_pct, 1) + "</td><td>" + esc(t.exit_reason) + "</td></tr>";
+        "</td><td>" + pct(t.mae_pct, 1) + "</td><td>" + pct(t.mfe_pct, 1) + "</td><td>" + money(t.cash_after) + "</td><td>"+ esc(t.exit_reason) + "</td></tr>";
     });
     $("tradeTable").innerHTML = h + "</tbody></table>";
   }

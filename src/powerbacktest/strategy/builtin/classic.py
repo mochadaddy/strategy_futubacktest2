@@ -11,7 +11,7 @@ from typing import Literal
 
 import pandas as pd
 from pydantic import Field, model_validator
-
+from powerbacktest.strategy.base import BarContext, PlotSpec, Strategy, StrategyParams, events, state
 from powerbacktest.strategy.base import PlotSpec, Strategy, StrategyParams, events, state
 from powerbacktest.strategy.registry import register
 from powerbacktest.strategy.tdx import CROSS, EMA, KDJ, MA, MACD, REF, RSI
@@ -112,6 +112,17 @@ class MACrossStrategy(Strategy):
         if self.params.mode == "state":
             return state((s > lg).where(lg.notna()))
         return events(CROSS(s, lg) & up, CROSS(lg, s) & down)
+
+    def on_bar(self, ctx: BarContext) -> float:
+        sig = ctx.signal
+        if ctx.position <= 0 or ctx.entry_price is None:
+            return sig
+        s = ctx.indicator("ma_short")
+        lg = ctx.indicator("ma_long")
+        filtered_cross = s < lg and sig != 0.0
+        if filtered_cross and ctx.close <= ctx.entry_price * 0.92:
+            return 0.0
+        return sig
 
 
 class KDJParams(StrategyParams):

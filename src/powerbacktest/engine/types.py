@@ -64,6 +64,7 @@ class Trade:
     mark_price: float | None = None
     mae_pct: float | None = None
     mfe_pct: float | None = None
+    cash_after: float | None = None
     # How the entry/exit filled: "open", "close", "intrabar" or "end".
     entry_fill: str = "open"
     exit_fill: str | None = None
@@ -128,6 +129,7 @@ class Trade:
             "is_open": self.is_open,
             "mae_pct": self.mae_pct,
             "mfe_pct": self.mfe_pct,
+            "cash_after": self.cash_after,  #序列化到报表
         }
 
 
